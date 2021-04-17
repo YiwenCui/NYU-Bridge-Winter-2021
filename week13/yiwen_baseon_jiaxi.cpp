@@ -6,10 +6,10 @@
 #include <time.h>
 
 using namespace std;
-const int ROW_RANGE = 20, COLUMN_RANGE = 20;
-// const int ROW_RANGE = 5, COLUMN_RANGE = 5;
-const int INITIAL_ANT_POPULATION = 100, INITIAL_DOODLEBUG_POPULATION = 5;
-// const int INITIAL_ANT_POPULATION = 1, INITIAL_DOODLEBUG_POPULATION = 2;
+// const int ROW_RANGE = 20, COLUMN_RANGE = 20;
+const int ROW_RANGE = 5, COLUMN_RANGE = 5;
+// const int INITIAL_ANT_POPULATION = 100, INITIAL_DOODLEBUG_POPULATION = 5;
+const int INITIAL_ANT_POPULATION = 10, INITIAL_DOODLEBUG_POPULATION = 2;
 const int ANT_BREED_STEP = 3, DOODLEBUG_BREED_STEP = 8;
 const int DOOLEBUG_STARVE_STEP = 3;
 const char NONE = '-', ANT = 'o', DOODLEBUG = 'X';
@@ -18,17 +18,13 @@ const int MOVE_UP = 1, MOVE_DOWN = 2, MOVE_LEFT = 3, MOVE_RIGHT = 4;
 class Organism
 {
 public:
-    Organism(int i, int j)
+    Organism()
     {
-        
         this->species = "NONE";
         this->sym = '-';
-        this->starveStep = 0;
-        this->i=i;
-        this->j=j;
-        this->breedStep=0;
+        this->age = 0;
     }
-    Organism(string species,int i, int j)
+    Organism(string species)
     {
         this->species = species;
         if (species == "ANT")
@@ -43,165 +39,39 @@ public:
         {
             this->sym = '-';
         }
-        this->i=i;
-        this->j=j;
-        this->breedStep=0;
-        this->starveStep = 0;
     }
-    int starveStep;
-    int breedStep;
+    int age;
     string get_species() { return this->species; };
     char get_sym() { return this->sym; };
     virtual void move(int i, int j, vector<vector<Organism *> > &world) {};
-    virtual void breed(vector<vector<Organism *> > &world){};
-    virtual void starve(vector<vector<Organism *> > &world) {};
-    void set_location(int i,int j){this->i =i; this->j = j;};
-    int i;
-    int j;
+    void breed();
+    virtual void starve(int i, int j, vector<vector<Organism *> > &world) {};
 
 private:
     string species;
     char sym;
-
     
 };
 
 class DoodleBug : public Organism
 {
 public:
-    DoodleBug(int i, int j) : Organism("DOODLEBUG", i,j){};
-    void starve(vector<vector<Organism *> > &world);
-    void breed(vector<vector<Organism *> > &world);
+    DoodleBug() : Organism("DOODLEBUG"){};
+    void starve(int i, int j, vector<vector<Organism *> > &world);
     void move(int i, int j, vector<vector<Organism *> > &world);
 };
 
 class Ant : public Organism
 {
 public:
-    Ant(int i, int j) : Organism("ANT", i, j){};
+    Ant() : Organism("ANT"){};
     void move(int i, int j, vector<vector<Organism *> > &world);
-    void breed(vector<vector<Organism *> > &world);
 };
 
-void DoodleBug::starve(vector<vector<Organism *> > &world){
-    if (this->starveStep>=3){
-        world[this->i][this->j]=new Organism(this->i,this->j);
+void DoodleBug::starve(int i, int j, vector<vector<Organism *> > &world){
+    if (this->age==3){
+        world[i][j]=new Organism();
     }
-}
-void Ant:: breed(vector<vector<Organism *> > &world){
-    vector<int> slot;
-    if (this->breedStep != 0 && this->breedStep % ANT_BREED_STEP == 0)
-    {
-        if (this->i - 1 >= 0)
-        {
-            if (world[this->i - 1][this->j]->get_species() == "NONE")
-            {
-                slot.push_back(MOVE_UP);
-            }
-        }
-        if (this->i + 1<= ROW_RANGE-1)
-        {
-            if (world[this->i + 1][this->j]->get_species() == "NONE")
-            {
-                slot.push_back(MOVE_DOWN);
-            }
-        }
-        if (this->j - 1 >= 0)
-        {
-            if (world[this->i][this->j-1]->get_species() == "NONE")
-            {
-                slot.push_back(MOVE_LEFT);
-            }
-        }
-        if (this->j + 1 <= COLUMN_RANGE-1)
-        {
-            if (world[this->i][this->j+1]->get_species() == "NONE")
-            {
-                slot.push_back(MOVE_RIGHT);
-            }
-        }
-
-        if (slot.size() != 0) {
-            srand(time(NULL));
-            int random = rand() % slot.size();
-
-            if (slot[random] == MOVE_UP)
-            {
-                world[this->i - 1][this->j] = new Ant(this->i - 1, this->j);
-            }
-            else if (slot[random] == MOVE_DOWN)
-            {
-                world[this->i + 1][this->j] = new Ant(this->i + 1, this->j);
-            }
-            else if (slot[random] == MOVE_LEFT)
-            {
-                world[this->i][this->j-1] = new Ant(this->i, this->j-1);
-            }
-            else if (slot[random] == MOVE_RIGHT)
-            {
-                world[this->i ][this->j+1] = new Ant(this->i, this->j+1);
-            }
-        }
-    }
-
-}
-
-void DoodleBug:: breed(vector<vector<Organism *> > &world){
-    vector<int> slot;
-    if (this->breedStep != 0 && this->breedStep % DOODLEBUG_BREED_STEP == 0 )
-    {
-        if (this->i - 1 >= 0)
-        {
-            if (world[this->i - 1][this->j]->get_species() == "NONE")
-            {
-                slot.push_back(MOVE_UP);
-            }
-        }
-        if (this->i + 1<= ROW_RANGE-1)
-        {
-            if (world[this->i + 1][this->j]->get_species() == "NONE")
-            {
-                slot.push_back(MOVE_DOWN);
-            }
-        }
-        if (this->j - 1 >= 0)
-        {
-            if (world[this->i][this->j-1]->get_species() == "NONE")
-            {
-                slot.push_back(MOVE_LEFT);
-            }
-        }
-        if (this->j + 1 <= COLUMN_RANGE-1)
-        {
-            if (world[this->i][this->j+1]->get_species() == "NONE")
-            {
-                slot.push_back(MOVE_RIGHT);
-            }
-        }
-        if (slot.size() != 0)
-        {
-            srand(time(NULL));
-            int random = rand() % slot.size();
-
-            if (slot[random] == MOVE_UP)
-            {
-                world[this->i - 1][this->j] = new DoodleBug(this->i - 1, this->j);
-            }
-            else if (slot[random] == MOVE_DOWN)
-            {
-                world[this->i + 1][this->j] = new DoodleBug(this->i + 1, this->j);
-            }
-            else if (slot[random] == MOVE_LEFT)
-            {
-                world[this->i][this->j - 1] = new DoodleBug(this->i, this->j - 1);
-            }
-            else if (slot[random] == MOVE_RIGHT)
-            {
-                world[this->i][this->j + 1] = new DoodleBug(this->i, this->j + 1);
-            }
-        }
-    }
-
 }
 void DoodleBug::move(int i, int j, vector<vector<Organism *> > &world)
 {
@@ -256,64 +126,78 @@ void DoodleBug::move(int i, int j, vector<vector<Organism *> > &world)
             emptyLocation.push_back(MOVE_RIGHT);
         }
     }
+    //cout<<i<<','<<j<<endl;
+    for (int i=0; i<antLocation.size();i++){
+        // cout<<antLocation[i]<<'|';
+    }
+    //cout<<endl;
+    for (int i=0; i<emptyLocation.size();i++){
+        // cout<<emptyLocation[i]<<'|';
+    }
+    //cout<<endl;
     
     if (antLocation.size() != 0)
     {
-        this->starveStep =0;
+        // cout << i << "," << j << endl;
+        // cout<<antLocation.size()<<endl;
         srand(time(NULL));
         int random = rand() % antLocation.size();
         if (antLocation[random] == MOVE_UP)
         {
-            world[i - 1][j] = world[i][j];
-            world[i - 1][j]->set_location(i - 1, j);
+            world[i - 1][j] = world[i][j] ;
+        
         }
         else if (antLocation[random] == MOVE_DOWN)
         {
-            world[i + 1][j] = world[i][j];
-            world[i + 1][j]->set_location(i + 1, j);
+            world[i + 1][j] = world[i][j] ;
+            
+            //world[i + 1][j] = new DoodleBug();
         }
         else if (antLocation[random] == MOVE_LEFT)
         {
-            world[i][j - 1] = world[i][j];
-            world[i][j - 1]->set_location(i, j - 1);
+            world[i][j-1] = world[i][j] ;
+            
+            //world[i][j - 1] = new DoodleBug();
         }
         else if (antLocation[random] == MOVE_RIGHT)
         {
-            world[i][j + 1] = world[i][j];
-            world[i][j + 1]->set_location(i, j + 1);
+            world[i][j+1] = world[i][j] ;
+
+            //world[i][j + 1] = new DoodleBug();
         }
-        world[i][j] = new Organism(i, j);
+        world[i][j] = new Organism();
     }
 
     else if (antLocation.size() == 0 && emptyLocation.size() != 0)
     {
         srand(time(NULL));
         int random = rand() % emptyLocation.size();
+        // cout << i << "," << j << "emoty" << endl;
+        // cout<<emptyLocation.size()<<endl;
 
         if (emptyLocation[random] == MOVE_UP)
         {
             world[i - 1][j] = world[i][j] ;
-            world[i - 1][j]->set_location(i - 1, j);
+            //world[i - 1][j]= new DoodleBug();
         }
         else if (emptyLocation[random] == MOVE_DOWN)
         {
             world[i + 1][j] = world[i][j] ;           
-            world[i + 1][j]->set_location(i + 1, j);
+            //world[i + 1][j] = new DoodleBug();
         }
         else if (emptyLocation[random] == MOVE_LEFT)
         {   
             world[i][j-1] = world[i][j] ;       
-            world[i][j - 1]->set_location(i, j - 1);
+            //world[i][j - 1] = new DoodleBug();
         }
         else if (emptyLocation[random] == MOVE_RIGHT)
         {
             world[i][j+1] = world[i][j] ;   
-            world[i][j + 1]->set_location(i, j + 1);
+            //world[i][j + 1] = new DoodleBug();
         }
-        world[i][j] = new Organism(i,j);
+        world[i][j] = new Organism();
     }
-    this->starveStep+=1;
-    this->breedStep+=1;
+    this->age+=1;
 }
 void Ant::move(int i, int j, vector<vector<Organism *> > &world)
 {
@@ -354,32 +238,29 @@ void Ant::move(int i, int j, vector<vector<Organism *> > &world)
 
     if (emptyLocation.size() != 0)
     {
+        // cout << i << "," << j << endl;
+        // cout << emptyLocation.size() << endl;
         srand(time(NULL));
         int random = rand() % emptyLocation.size();
         if (emptyLocation[random] == MOVE_UP)
         {
-            world[i - 1][j] = world[i][j];
-            world[i - 1][j]->set_location(i - 1, j);
+            world[i - 1][j] = world[i][j] ;
         }
         else if (emptyLocation[random] == MOVE_DOWN)
         {
-            world[i + 1][j] = world[i][j];
-            world[i + 1][j]->set_location(i + 1, j);
+            world[i + 1][j] = world[i][j] ;
         }
         else if (emptyLocation[random] == MOVE_LEFT)
         {
-            world[i][j - 1] = world[i][j];
-            world[i][j - 1]->set_location(i, j - 1);
+            world[i][j-1] = world[i][j] ;
         }
         else if (emptyLocation[random] == MOVE_RIGHT)
         {
-            world[i][j + 1] = world[i][j];
-            world[i][j + 1]->set_location(i, j + 1);
+            world[i][j+1] = world[i][j] ;
         }
-        world[i][j] = new Organism(i, j);
+        world[i][j] = new Organism();
     }
-    
-    this->breedStep+=1;
+    this->age +=1;
 
 }
 void printWorld(vector<vector<Organism *> > world)
@@ -407,7 +288,7 @@ void createAWorld(vector<vector<Organism *> > &world)
             randomX1 = rand() % ROW_RANGE;
             randomY1 = rand() % COLUMN_RANGE;
         }
-        world[randomX1][randomY1] = new Ant(randomX1, randomY1);
+        world[randomX1][randomY1] = new Ant();
     }
     // generate 5 doodlebugs at random place in the world
     srand(time(NULL));
@@ -422,12 +303,13 @@ void createAWorld(vector<vector<Organism *> > &world)
             randomY2 = rand() % COLUMN_RANGE;
         }
 
-        world[randomX2][randomY2] = new DoodleBug(randomX2,randomY2);
+        world[randomX2][randomY2] = new DoodleBug();
     }
 }
 
 int main()
 {
+    string userInput;
     vector<vector<Organism *> > world;
 
     for (int i = 0; i < ROW_RANGE; ++i)
@@ -438,18 +320,24 @@ int main()
     {
         for (int j = 0; j < COLUMN_RANGE; j++)
         {
-            world[i].push_back(new Organism(i, j));
+            world[i].push_back(new Organism());
         }
     }
     createAWorld(world);
     printWorld(world);
-
-    while (true)
+    
+    
+    userInput="Yes";
+    while (userInput != "exit")
     {
-        cout << "MOVE? press enter to move, ctrl + c if want to stop" << endl;
-        cin.ignore();
+        cout<<"MOVE? enter Yes if you want to move, enter exit if want to stop"<<endl;
+        cin>>userInput;
         vector<Organism *> BugsToMove;
         vector<Organism *> AntsToMove;
+        vector<int> BugiToMove;
+        vector<int> BugjToMove;
+        vector<int> AntiToMove;
+        vector<int> AntjToMove;
         for (int i = 0; i < ROW_RANGE; i++)
         {
             for (int j = 0; j < COLUMN_RANGE; j++)
@@ -457,15 +345,15 @@ int main()
                 if (world[i][j]->get_species() == "DOODLEBUG")
                 {
                     BugsToMove.push_back(world[i][j]);
+                    BugiToMove.push_back(i);
+                    BugjToMove.push_back(j);
                 }
             }
         }
 
         for (int i = 0; i < BugsToMove.size(); i++)
         {
-            BugsToMove[i]->move(BugsToMove[i]->i, BugsToMove[i]->j, world);
-            BugsToMove[i]->breed(world);
-            BugsToMove[i]->starve(world);
+            BugsToMove[i]->move(BugiToMove[i], BugjToMove[i], world);
         }
 
         for (int i = 0; i < ROW_RANGE; i++)
@@ -475,24 +363,26 @@ int main()
                 if (world[i][j]->get_species() == "ANT")
                 {
                     AntsToMove.push_back(world[i][j]);
+                    AntiToMove.push_back(i);
+                    AntjToMove.push_back(j);
                 }
             }
         }
 
         for (int i = 0; i < AntsToMove.size(); i++)
         {
-            AntsToMove[i]->move(AntsToMove[i]->i, AntsToMove[i]->j, world);
+            AntsToMove[i]->move(AntiToMove[i], AntjToMove[i], world);
         }
 
-        for (int i = 0; i < AntsToMove.size(); i++)
-        {
-            AntsToMove[i]->breed(world);
+        for (int i=0; i<BugsToMove.size();i++){
+            BugsToMove[i]->starve(BugiToMove[i], BugjToMove[i], world);
         }
 
         cout << endl;
 
         printWorld(world);
+        
     }
-
+    
     return 0;
 }
